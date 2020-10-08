@@ -40,8 +40,8 @@ public class SelenideElementListProxy implements InvocationHandler {
       for (WebElement webElement : locator.findElements()) {
         elements.add(WebElementWrapper.wrap(driver, webElement));
       }
-    } catch (WebDriverException webDriverException) {
-      webDriverException.printStackTrace();
+    } catch (Exception e) {
+      e.printStackTrace();
     }
     try {
       return method.invoke(elements, args);
