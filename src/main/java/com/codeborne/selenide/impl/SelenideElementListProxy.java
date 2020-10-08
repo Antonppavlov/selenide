@@ -2,6 +2,7 @@ package com.codeborne.selenide.impl;
 
 import com.codeborne.selenide.Driver;
 import com.codeborne.selenide.SelenideElement;
+import org.openqa.selenium.WebDriverException;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.support.pagefactory.ElementLocator;
 
@@ -21,7 +22,7 @@ public class SelenideElementListProxy implements InvocationHandler {
     InvocationHandler handler = new SelenideElementListProxy(driver, locator);
 
     return (List<SelenideElement>) Proxy.newProxyInstance(
-        SelenideElementListProxy.class.getClassLoader(), new Class[]{List.class}, handler);
+      SelenideElementListProxy.class.getClassLoader(), new Class[]{List.class}, handler);
   }
 
   private final Driver driver;
@@ -35,8 +36,12 @@ public class SelenideElementListProxy implements InvocationHandler {
   @Override
   public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
     List<SelenideElement> elements = new ArrayList<>();
-    for (WebElement webElement : locator.findElements()) {
-      elements.add(WebElementWrapper.wrap(driver, webElement));
+    try {
+      for (WebElement webElement : locator.findElements()) {
+        elements.add(WebElementWrapper.wrap(driver, webElement));
+      }
+    } catch (WebDriverException webDriverException) {
+      webDriverException.printStackTrace();
     }
     try {
       return method.invoke(elements, args);
