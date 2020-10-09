@@ -12,7 +12,6 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.NoSuchElementException;
 
 @ParametersAreNonnullByDefault
 public class SelenideElementListProxy implements InvocationHandler {
@@ -36,12 +35,12 @@ public class SelenideElementListProxy implements InvocationHandler {
   @Override
   public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
     List<SelenideElement> elements = new ArrayList<>();
-    try {
-      for (WebElement webElement : locator.findElements()) {
+    for (WebElement webElement : locator.findElements()) {
+      try {
         elements.add(WebElementWrapper.wrap(driver, webElement));
+      } catch (Exception e) {
+        e.printStackTrace();
       }
-    } catch (NoSuchElementException e) {
-      e.printStackTrace();
     }
     try {
       return method.invoke(elements, args);
