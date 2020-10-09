@@ -35,12 +35,15 @@ public class SelenideElementListProxy implements InvocationHandler {
   @Override
   public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
     List<SelenideElement> elements = new ArrayList<>();
-    for (WebElement webElement : locator.findElements()) {
-      try {
+    try {
+      for (WebElement webElement : locator.findElements()) {
         elements.add(WebElementWrapper.wrap(driver, webElement));
-      } catch (Exception e) {
-        e.printStackTrace();
       }
+    } catch (Exception e) {
+      System.out.println("!!!!!!!!!!!!!");
+      System.out.println("!!!!!!!!!!!!!");
+      System.out.println("!!!!!!!!!!!!!");
+      System.out.println("!!!!!!!!!!!!!");
     }
     try {
       return method.invoke(elements, args);
