@@ -1,26 +1,20 @@
 package com.codeborne.selenide.impl;
 
 import com.codeborne.selenide.Driver;
-import com.codeborne.selenide.SelenideElement;
 import org.apache.commons.io.IOUtils;
 import org.openqa.selenium.By;
 import org.openqa.selenium.By.ByCssSelector;
-import org.openqa.selenium.NoSuchElementException;
 import org.openqa.selenium.SearchContext;
 import org.openqa.selenium.WebDriverException;
 import org.openqa.selenium.WebElement;
 
-import javax.annotation.CheckReturnValue;
-import javax.annotation.Nonnull;
 import javax.annotation.ParametersAreNonnullByDefault;
 import java.io.IOException;
-import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 import static com.codeborne.selenide.SelectorMode.CSS;
 import static java.lang.Thread.currentThread;
-import static java.util.Objects.requireNonNull;
 
 /**
  * Thanks to http://selenium.polteq.com/en/injecting-the-sizzle-css-selector-library/
@@ -31,64 +25,29 @@ public class WebElementSelector {
 
   protected String sizzleSource;
 
-  @CheckReturnValue
-  @Nonnull
   public WebElement findElement(Driver driver, SearchContext context, By selector) {
-    checkThatXPathNotStartingFromSlash(context, selector);
-
     if (driver.config().selectorMode() == CSS || !(selector instanceof ByCssSelector)) {
-      return findElement(context, selector);
+      return context.findElement(selector);
     }
 
     List<WebElement> webElements = evaluateSizzleSelector(driver, context, (ByCssSelector) selector);
-    if (webElements.isEmpty()) {
-      throw new NoSuchElementException("Cannot locate an element using " + selector);
-    }
-    return webElements.get(0);
+    return webElements.isEmpty() ? null : webElements.get(0);
   }
 
-  @CheckReturnValue
-  @Nonnull
   public List<WebElement> findElements(Driver driver, SearchContext context, By selector) {
-    checkThatXPathNotStartingFromSlash(context, selector);
-
     if (driver.config().selectorMode() == CSS || !(selector instanceof ByCssSelector)) {
-      return findElements(context, selector);
+      return context.findElements(selector);
     }
 
     return evaluateSizzleSelector(driver, context, (ByCssSelector) selector);
   }
 
-  private WebElement findElement(SearchContext context, By selector) {
-    return context instanceof SelenideElement ?
-      ((SelenideElement) context).toWebElement().findElement(selector) :
-      context.findElement(selector);
-  }
-
-  private List<WebElement> findElements(SearchContext context, By selector) {
-    return context instanceof SelenideElement ?
-      ((SelenideElement) context).toWebElement().findElements(selector) :
-      context.findElements(selector);
-  }
-
-  protected void checkThatXPathNotStartingFromSlash(SearchContext context, By selector) {
-    if (context instanceof WebElement) {
-      if (selector instanceof By.ByXPath) {
-        if (selector.toString().startsWith("By.xpath: /")) {
-          throw new IllegalArgumentException("XPath starting from / searches from root");
-        }
-      }
-    }
-  }
-
-  @CheckReturnValue
-  @Nonnull
   protected List<WebElement> evaluateSizzleSelector(Driver driver, SearchContext context, ByCssSelector sizzleCssSelector) {
     injectSizzleIfNeeded(driver);
 
     String sizzleSelector = sizzleCssSelector.toString()
-        .replace("By.selector: ", "")
-        .replace("By.cssSelector: ", "");
+      .replace("By.selector: ", "")
+      .replace("By.cssSelector: ", "");
 
     if (context instanceof WebElement)
       return driver.executeJavaScript("return Sizzle(arguments[0], arguments[1])", sizzleSelector, context);
@@ -113,8 +72,7 @@ public class WebElementSelector {
   protected synchronized void injectSizzle(Driver driver) {
     if (sizzleSource == null) {
       try {
-        URL sizzleJs = requireNonNull(currentThread().getContextClassLoader().getResource("sizzle.js"));
-        sizzleSource = IOUtils.toString(sizzleJs, StandardCharsets.UTF_8);
+        sizzleSource = IOUtils.toString(currentThread().getContextClassLoader().getResource("sizzle.js"), StandardCharsets.UTF_8);
       } catch (IOException e) {
         throw new RuntimeException("Cannot load sizzle.js from classpath", e);
       }
