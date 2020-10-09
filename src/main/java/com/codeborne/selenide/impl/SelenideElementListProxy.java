@@ -3,6 +3,7 @@ package com.codeborne.selenide.impl;
 import com.codeborne.selenide.Driver;
 import com.codeborne.selenide.SelenideElement;
 import org.openqa.selenium.WebElement;
+import org.openqa.selenium.support.pagefactory.DefaultElementLocator;
 import org.openqa.selenium.support.pagefactory.ElementLocator;
 
 import javax.annotation.ParametersAreNonnullByDefault;
@@ -37,12 +38,15 @@ public class SelenideElementListProxy implements InvocationHandler {
     List<SelenideElement> elements = new ArrayList<>();
     try {
       List<WebElement> webElementList = new ArrayList<>();
-
       try {
         webElementList = locator.findElements();
       } catch (Throwable throwable) {
         System.out.println("!!!!!!!!!!!!!");
-        System.out.println("Throwable");
+        if (locator instanceof DefaultElementLocator) {
+          System.out.println("Блок элементов не найден на странице, но это не является ошибкой");
+          System.out.println(((DefaultElementLocator) locator).toString());
+        }
+        System.out.println(throwable.getMessage());
         System.out.println("!!!!!!!!!!!!!");
       }
 
@@ -50,9 +54,10 @@ public class SelenideElementListProxy implements InvocationHandler {
         elements.add(WebElementWrapper.wrap(driver, webElement));
       }
 
-    } catch (Exception e) {
+    } catch (Throwable throwable) {
       System.out.println("!!!!!!!!!!!!!");
-      System.out.println("Exception");
+      System.out.println("webElementList = locator.findElements();");
+      System.out.println(throwable.getMessage());
       System.out.println("!!!!!!!!!!!!!");
     }
     try {
