@@ -3,156 +3,192 @@ package com.codeborne.selenide.impl;
 import com.codeborne.selenide.Config;
 import com.codeborne.selenide.Driver;
 import com.codeborne.selenide.DriverStub;
+import com.codeborne.selenide.ElementsCollection;
 import com.codeborne.selenide.ElementsContainer;
+import com.codeborne.selenide.SelenideConfig;
 import com.codeborne.selenide.SelenideElement;
 import org.assertj.core.api.WithAssertions;
 import org.junit.jupiter.api.Test;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
+import org.openqa.selenium.support.ByIdOrName;
 import org.openqa.selenium.support.FindBy;
 import org.openqa.selenium.support.pagefactory.DefaultElementLocatorFactory;
+import org.openqa.selenium.support.pagefactory.FieldDecorator;
 
 import java.lang.reflect.Field;
 import java.util.List;
 
+import static com.codeborne.selenide.Condition.text;
+import static com.codeborne.selenide.Mocks.mockWebElement;
 import static java.util.Arrays.asList;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 final class SelenideFieldDecoratorTest implements WithAssertions {
-  private TestPage page = new TestPage();
-  private Config config = mock(Config.class);
-  private WebDriver webDriver = mock(WebDriver.class);
-  private Driver driver = new DriverStub(config, null, webDriver, null);
-  private SelenidePageFactory pageFactory = new SelenidePageFactory();
-  private SelenideFieldDecorator fieldDecorator = new SelenideFieldDecorator(pageFactory, driver, webDriver);
+  private final TestPage page = new TestPage();
+  private final Config config = new SelenideConfig();
+  private final WebDriver webDriver = mock(WebDriver.class);
+  private final Driver driver = new DriverStub(config, null, webDriver, null);
+  private final PageObjectFactory pageFactory = new SelenidePageFactory();
+  private final SelenideFieldDecorator fieldDecorator = new SelenideFieldDecorator(pageFactory, driver, webDriver);
 
   @Test
-  void usesDefaultElementLocatorFactory() throws NoSuchFieldException {
+  void usesDefaultElementLocatorFactory() throws NoSuchFieldException, IllegalAccessException {
     SelenideFieldDecorator fieldDecorator = new SelenideFieldDecorator(pageFactory, driver, webDriver);
-    Field factoryField = fieldDecorator.getClass().getSuperclass().getDeclaredField("factory");
+    Field fieldDecoratorField = fieldDecorator.getClass().getDeclaredField("defaultFieldDecorator");
+    fieldDecoratorField.setAccessible(true);
+    FieldDecorator defaultFieldDecorator = (FieldDecorator) fieldDecoratorField.get(fieldDecorator);
+    Field factoryField = defaultFieldDecorator.getClass().getDeclaredField("factory");
     assertThat(factoryField.getType())
       .isAssignableFrom(DefaultElementLocatorFactory.class);
   }
 
   @Test
   void decoratesSelenideElement() throws NoSuchFieldException {
-    assertThat(fieldDecorator.decorate(getClass().getClassLoader(), getField("username")))
+    assertThat(fieldDecorator.decorate(getClass().getClassLoader(), getField("username"), new ByIdOrName("username")))
       .isInstanceOf(SelenideElement.class);
   }
 
   private Field getField(String fieldName) throws NoSuchFieldException {
+    return getField(page, fieldName);
+  }
+
+  private <T> Field getField(T page, String fieldName) throws NoSuchFieldException {
     return page.getClass().getDeclaredField(fieldName);
   }
 
   @Test
-  @SuppressWarnings("unchecked")
+  void decoratesElementsCollection() throws NoSuchFieldException {
+    TestPageWithElementsCollection page = new TestPageWithElementsCollection();
+
+    Object decoratedField = fieldDecorator.decorate(getClass().getClassLoader(),
+      getField(page, "rows"), By.cssSelector("table tbody tr"));
+
+    assertThat(decoratedField).isInstanceOf(ElementsCollection.class);
+    verifyNoMoreInteractions(webDriver);
+  }
+
+  @Test
   void decoratesListOfSelenideElements() throws NoSuchFieldException {
-    when(webDriver.findElements(any(By.class))).thenReturn(asList(mock(WebElement.class), mock(WebElement.class)));
+    WebElement element1 = mock(WebElement.class);
+    WebElement element2 = mock(WebElement.class);
+    when(webDriver.findElements(any(By.class))).thenReturn(asList(element1, element2));
 
-    Object decoratedField = fieldDecorator.decorate(getClass().getClassLoader(), getField("rows"));
+    Object decoratedField = fieldDecorator.decorate(getClass().getClassLoader(), getField("rows"), By.cssSelector("table tbody tr"));
+    assertThat(decoratedField).isInstanceOf(ElementsCollection.class);
+    verifyNoMoreInteractions(webDriver);
 
-    assertThat(decoratedField)
-      .isInstanceOf(List.class);
-    List<SelenideElement> elements = (List<SelenideElement>) decoratedField;
-    assertThat(elements)
-      .hasSize(2);
-    verify(webDriver).findElements(any(By.class));
-    assertThat(elements.get(0))
-      .isInstanceOf(SelenideElement.class);
-    assertThat(elements.get(1))
-      .isInstanceOf(SelenideElement.class);
+    ElementsCollection elementsCollection = (ElementsCollection) decoratedField;
+    Object[] elements = elementsCollection.toArray();
+    assertThat(elements).hasSize(2);
+    verify(webDriver).findElements(By.cssSelector("table tbody tr"));
+    assertThat(elements[0]).isInstanceOf(SelenideElement.class);
+    assertThat(elements[0]).isInstanceOf(SelenideElement.class);
   }
 
   @Test
   void decoratesVanillaWebElements() throws NoSuchFieldException {
-    final Object someDiv = fieldDecorator.decorate(getClass().getClassLoader(), getField("someDiv"));
+    final Object someDiv = fieldDecorator.decorate(getClass().getClassLoader(), getField("someDiv"), new ByIdOrName("someDiv"));
+    assertThat(someDiv).isNotNull();
     assertThat(someDiv)
-      .withFailMessage("someDiv should not be instance of SelenideElement. Actual class: " + someDiv.getClass())
+      .withFailMessage("someDiv should be instance of SelenideElement. Actual class: " + someDiv.getClass())
       .isInstanceOf(SelenideElement.class);
   }
 
   @Test
   @SuppressWarnings("unchecked")
   void decoratesListOfVanillaWebElements() throws NoSuchFieldException {
-    when(webDriver.findElements(any(By.class))).thenReturn(asList(mock(WebElement.class), mock(WebElement.class)));
-    List<WebElement> elements = (List<WebElement>) fieldDecorator.decorate(getClass().getClassLoader(), getField("data"));
-    assertThat(elements)
-      .hasSize(2);
-    verify(webDriver).findElements(any(By.class));
-    assertThat(elements.get(0))
-      .isInstanceOf(WebElement.class);
-    assertThat(elements.get(1))
-      .isNotInstanceOf(SelenideElement.class);
+    WebElement element1 = mock(WebElement.class);
+    WebElement element2 = mock(WebElement.class);
+    when(webDriver.findElements(any(By.class))).thenReturn(asList(element1, element2));
+
+    List<WebElement> elements = (List<WebElement>) fieldDecorator.decorate(getClass().getClassLoader(),
+      getField("data"), By.cssSelector("table tbody tr"));
+
+    assertThat(elements).hasSize(2);
+    verify(webDriver).findElements(By.cssSelector("table tbody tr"));
+    assertThat(elements.get(0)).isInstanceOf(SelenideElement.class);
+    assertThat(elements.get(1)).isInstanceOf(SelenideElement.class);
   }
 
   @Test
   void ignoresUnknownTypes() throws NoSuchFieldException {
-    assertThat(fieldDecorator.decorate(getClass().getClassLoader(), getField("unsupportedField")))
+    assertThat(fieldDecorator.decorate(getClass().getClassLoader(), getField("unsupportedField"), new ByIdOrName("unsupportedField")))
       .isNull();
   }
 
   @Test
   void decoratesElementsContainerWithItsSubElements() throws NoSuchFieldException {
-    StatusBlock status = (StatusBlock) fieldDecorator.decorate(getClass().getClassLoader(), getField("status"));
-    WebElement statusElement = mock(WebElement.class);
+    StatusBlock status = (StatusBlock) fieldDecorator.decorate(getClass().getClassLoader(), getField("status"), By.id("status"));
+    WebElement statusElement = mockWebElement("div", "the status");
+    WebElement lastLogin = mockWebElement("div", "03.03.2003");
+    WebElement name = mockWebElement("div", "lena");
     when(webDriver.findElement(By.id("status"))).thenReturn(statusElement);
-    when(statusElement.findElement(By.className("last-login"))).thenReturn(mock(WebElement.class));
-    when(statusElement.findElement(By.className("name"))).thenReturn(mock(WebElement.class));
+    when(statusElement.findElement(By.className("last-login"))).thenReturn(lastLogin);
+    when(statusElement.findElement(By.className("name"))).thenReturn(name);
 
-    assertThat(status)
-      .isNotNull();
-    assertThat(status.getSelf())
-      .isNotNull();
-    status.getSelf().getText();
+    assertThat(status).isNotNull();
+    assertThat(status.getSelf()).isNotNull();
+    status.getSelf().shouldHave(text("the status"));
     verify(webDriver).findElement(By.id("status"));
-    assertThat(status.lastLogin)
-      .isNotNull();
-    status.lastLogin.getText();
+
+    assertThat(status.lastLogin).isNotNull();
+    status.lastLogin.shouldHave(text("03.03.2003"));
     verify(statusElement).findElement(By.className("last-login"));
-    assertThat(status.name)
-      .isNotNull();
-    status.name.getText();
+
+    assertThat(status.name).isNotNull();
+    status.name.shouldHave(text("lena"));
     verify(statusElement).findElement(By.className("name"));
   }
 
   @SuppressWarnings("unchecked")
   @Test
   void decoratesElementsContainerListWithItsSubElements() throws NoSuchFieldException {
-    WebElement statusElement1 = mock(WebElement.class);
-    WebElement statusElement2 = mock(WebElement.class);
-    when(webDriver.findElements(any(By.class))).thenReturn(asList(statusElement1, statusElement2));
-    when(statusElement1.getText()).thenReturn("status element1 text");
-    when(statusElement1.findElement(By.className("last-login"))).thenReturn(mock(WebElement.class));
-    when(statusElement1.findElement(By.className("name"))).thenReturn(mock(WebElement.class));
-    when(statusElement2.findElement(By.className("last-login"))).thenReturn(mock(WebElement.class));
-    when(statusElement2.findElement(By.className("name"))).thenReturn(mock(WebElement.class));
+    WebElement statusElement1 = mockWebElement("div", "status element1 text");
+    WebElement statusElement2 = mockWebElement("div", "status element2 text");
+    when(webDriver.findElement(any())).thenReturn(statusElement1);
+    when(webDriver.findElements(any())).thenReturn(asList(statusElement1, statusElement2));
 
-    Object decoratedField = fieldDecorator.decorate(getClass().getClassLoader(), getField("statusHistory"));
+    WebElement lastLogin1 = mockWebElement("div", "01.01.2001");
+    when(statusElement1.findElement(By.className("last-login"))).thenReturn(lastLogin1);
+    WebElement name1 = mockWebElement("div", "john");
+    when(statusElement1.findElement(By.className("name"))).thenReturn(name1);
+    WebElement lastLogin2 = mockWebElement("div", "02.02.2002");
+    when(statusElement2.findElement(By.className("last-login"))).thenReturn(lastLogin2);
+    WebElement name2 = mockWebElement("div", "katie");
+    when(statusElement2.findElement(By.className("name"))).thenReturn(name2);
 
-    assertThat(decoratedField)
-      .isInstanceOf(List.class);
+    Object decoratedField = fieldDecorator.decorate(getClass().getClassLoader(),
+      getField("statusHistory"), By.cssSelector("table.history tr.status"));
+
+    assertThat(decoratedField).isInstanceOf(List.class);
     List<StatusBlock> statusHistory = (List<StatusBlock>) decoratedField;
-    assertThat(statusHistory)
-      .isNotNull();
+    assertThat(statusHistory).isNotNull();
+    verify(webDriver, never()).findElements(By.cssSelector("table.history tr.status"));
+    assertThat(statusHistory).hasSize(2);
     verify(webDriver).findElements(By.cssSelector("table.history tr.status"));
-    assertThat(statusHistory)
-      .hasSize(2);
-    assertThat(statusHistory.get(0).getSelf().getText())
-      .isEqualTo("status element1 text");
-    assertThat(statusHistory.get(0).lastLogin)
-      .isNotNull();
-    statusHistory.get(0).lastLogin.getText();
-    verify(statusElement1).findElement(By.className("last-login"));
-    assertThat(statusHistory.get(0).name)
-      .isNotNull();
-    statusHistory.get(0).name.getText();
-    verify(statusElement1).findElement(By.className("name"));
+
+    checkItemInStatusHistory(statusElement1, statusHistory.get(0), "status element1 text", "01.01.2001", "john");
+    checkItemInStatusHistory(statusElement2, statusHistory.get(1), "status element2 text", "02.02.2002", "katie");
   }
 
+  private void checkItemInStatusHistory(WebElement statusElement, StatusBlock status, String text, String lastLogin, String name) {
+    assertThat(status.getSelf().getText()).isEqualTo(text);
+
+    status.lastLogin.shouldHave(text(lastLogin));
+    verify(statusElement).findElement(By.className("last-login"));
+
+    status.name.shouldHave(text(name));
+    verify(statusElement).findElement(By.className("name"));
+  }
+
+  @SuppressWarnings("unused")
   static class TestPage {
     SelenideElement username;
     @FindBy(css = "table tbody tr")
@@ -177,5 +213,11 @@ final class SelenideFieldDecoratorTest implements WithAssertions {
 
     @FindBy(className = "name")
     SelenideElement name;
+  }
+
+  @SuppressWarnings("unused")
+  static class TestPageWithElementsCollection {
+    @FindBy(css = "table tbody tr")
+    ElementsCollection rows;
   }
 }

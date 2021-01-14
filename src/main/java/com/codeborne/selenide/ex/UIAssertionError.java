@@ -3,12 +3,14 @@ package com.codeborne.selenide.ex;
 import com.codeborne.selenide.Driver;
 import com.codeborne.selenide.impl.Cleanup;
 import com.codeborne.selenide.impl.ScreenShotLaboratory;
+import com.codeborne.selenide.impl.Screenshot;
+import org.openqa.selenium.WebDriverException;
 
+import javax.annotation.CheckReturnValue;
 import javax.annotation.Nullable;
 import javax.annotation.ParametersAreNonnullByDefault;
 
 import static com.codeborne.selenide.ex.ErrorMessages.causedBy;
-import static com.codeborne.selenide.ex.ErrorMessages.screenshot;
 import static com.codeborne.selenide.ex.ErrorMessages.timeout;
 
 
@@ -16,7 +18,7 @@ import static com.codeborne.selenide.ex.ErrorMessages.timeout;
 public class UIAssertionError extends AssertionError {
   private final Driver driver;
 
-  private String screenshot;
+  private Screenshot screenshot = Screenshot.none();
   public long timeoutMs;
 
   protected UIAssertionError(Driver driver, String message) {
@@ -29,18 +31,21 @@ public class UIAssertionError extends AssertionError {
     this.driver = driver;
   }
 
+  @CheckReturnValue
   @Override
   public final String getMessage() {
     return super.getMessage() + uiDetails();
   }
 
+  @CheckReturnValue
   @Override
   public final String toString() {
     return getMessage();
   }
 
+  @CheckReturnValue
   protected String uiDetails() {
-    return screenshot(driver.config(), screenshot) + timeout(timeoutMs) + causedBy(getCause());
+    return screenshot.summary() + timeout(timeoutMs) + causedBy(getCause());
   }
 
   /**
@@ -48,25 +53,31 @@ public class UIAssertionError extends AssertionError {
    *
    * @return empty string if screenshots are disabled
    */
-  public String getScreenshot() {
+  @CheckReturnValue
+  public Screenshot getScreenshot() {
     return screenshot;
   }
 
+  @CheckReturnValue
   public static Error wrap(Driver driver, Error error, long timeoutMs) {
-    if (Cleanup.of.isInvalidSelectorError(error))
-      return error;
-
-    return wrapThrowable(driver, error, timeoutMs);
+    return Cleanup.of.isInvalidSelectorError(error) ? error : wrapThrowable(driver, error, timeoutMs);
   }
 
-  private static Error wrapThrowable(Driver driver, Throwable error, long timeoutMs) {
+  @CheckReturnValue
+  public static Throwable wrap(Driver driver, WebDriverException error, long timeoutMs) {
+    return Cleanup.of.isInvalidSelectorError(error) ? error : wrapThrowable(driver, error, timeoutMs);
+  }
+
+  @CheckReturnValue
+  private static UIAssertionError wrapThrowable(Driver driver, Throwable error, long timeoutMs) {
     UIAssertionError uiError = error instanceof UIAssertionError ?
       (UIAssertionError) error : wrapToUIAssertionError(driver, error);
     uiError.timeoutMs = timeoutMs;
-    uiError.screenshot = ScreenShotLaboratory.getInstance().formatScreenShotPath(driver);
+    uiError.screenshot = ScreenShotLaboratory.getInstance().takeScreenshot(driver);
     return uiError;
   }
 
+  @CheckReturnValue
   private static UIAssertionError wrapToUIAssertionError(Driver driver, Throwable error) {
     String message = error.getClass().getSimpleName() + ": " + Cleanup.of.webdriverExceptionMessage(error.getMessage());
     return new UIAssertionError(driver, message, error);

@@ -4,7 +4,7 @@ import com.codeborne.selenide.Config;
 import com.codeborne.selenide.DownloadsFolder;
 import com.codeborne.selenide.Driver;
 import com.codeborne.selenide.files.FileFilter;
-import com.codeborne.selenide.proxy.DownloadedFile;
+import com.codeborne.selenide.files.DownloadedFile;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.slf4j.Logger;
@@ -61,6 +61,10 @@ public class DownloadFileToFolder {
     Config config = driver.config();
     DownloadsFolder folder = driver.browserDownloadsFolder();
 
+    if (folder == null) {
+      throw new IllegalStateException("Downloads folder is not configured");
+    }
+
     folder.cleanupBeforeDownload();
     long downloadStartedAt = System.currentTimeMillis();
 
@@ -89,7 +93,7 @@ public class DownloadFileToFolder {
   @Nonnull
   private File archiveFile(Config config, File downloadedFile) {
     File uniqueFolder = downloader.prepareTargetFolder(config);
-    File archivedFile = new File(uniqueFolder, downloadedFile.getName());
+    File archivedFile = new File(uniqueFolder, downloadedFile.getName()).getAbsoluteFile();
     moveFile(downloadedFile, archivedFile);
     return archivedFile;
   }

@@ -1,15 +1,13 @@
 # Selenide = UI Testing Framework powered by Selenium WebDriver
 
-[![Build Status](https://travis-ci.org/selenide/selenide.svg?branch=master)](https://travis-ci.org/selenide/selenide)
+![Build Status](https://github.com/selenide/selenide/workflows/Run%20tests/badge.svg)
 [![Maven Central](https://img.shields.io/maven-central/v/com.codeborne/selenide.svg)](https://search.maven.org/artifact/com.codeborne/selenide)
-[![Sonar Quality Gate](https://sonarcloud.io/api/project_badges/measure?project=com.codeborne%3Aselenide&metric=alert_status)](https://sonarcloud.io/dashboard?id=com.codeborne%3Aselenide)
-[![Sonar Coverage](https://sonarcloud.io/api/project_badges/measure?project=com.codeborne%3Aselenide&metric=coverage)](https://sonarcloud.io/dashboard?id=com.codeborne%3Aselenide)
 [![MIT License](http://img.shields.io/badge/license-MIT-green.svg)](https://github.com/selenide/selenide/blob/master/LICENSE)
 ![Free](https://img.shields.io/badge/free-open--source-green.svg)
 
 [![Join the chat at https://gitter.im/codeborne/selenide](https://img.shields.io/badge/welcome%20to-chat-green.svg)](https://gitter.im/codeborne/selenide?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 [![Присоединяйся к чату https://gitter.im/codeborne/selenide-ru](https://img.shields.io/badge/%D0%B7%D0%B0%D1%85%D0%BE%D0%B4%D0%B8%20%D0%B2-%D1%87%D0%B0%D1%82-green.svg)](https://gitter.im/codeborne/selenide-ru?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
-[![Follow](https://img.shields.io/twitter/follow/jselenide.svg?style=social&label=Follow)](https://twitter.com/jselenide)
+[![Follow](https://img.shields.io/twitter/follow/selenide.svg?style=social&label=Follow)](https://twitter.com/selenide)
 [![Slack chat](https://img.shields.io/badge/slack-chat-yellow.svg)](https://testers.io/messages/selenide)
 [![Слак чат](https://img.shields.io/badge/слак-чат-yellow.svg)](https://softwaretesters.slack.com/messages/selenide_ru)
 [![Telegram чат](https://img.shields.io/badge/Telegram-%D1%87%D0%B0%D1%82-blue.svg)](https://t.me/selenide_ru)
@@ -19,7 +17,7 @@
 Selenide is a framework for writing easy-to-read and easy-to-maintain automated tests in Java.
 It defines concise fluent API, natural language assertions and does some magic for ajax-based applications to let you focus entirely on the business logic of your tests.
 
-Selenide is based on and is compatible to Selenium WebDriver 2.0 and 3.0
+Selenide is based on and is compatible to Selenium WebDriver 2.0+ and 3.0+
 
     @Test
     public void testLogin() {
@@ -57,33 +55,20 @@ See [Frequently asked questions](http://selenide.org/faq.html)
 - Set-up environment with gradle, junit5, allure and selenide -- read a [post](https://medium.com/@rosolko/simple-allure-2-configuration-for-gradle-8cd3810658dd) on medium, grab from [github](https://github.com/rosolko/allure-gradle-configuration)
 - Small step do dramatically improve your tests speed -- read a [post](https://medium.com/@rosolko/boost-you-autotests-with-fast-authorization-b3eee52ecc19) on medium
 - Another way to improve tests speed -- read a [post](https://medium.com/@rosolko/fast-authorization-level-local-storage-6c84e9b3cef1) on medium
+- [Configure Selenide to work with Selenoid](https://medium.com/@rosolko/configure-selenide-to-work-with-selenoid-8835cd6dc7d2)
 
-## How to build Selenide?
+## Contributing
 
-    git clone https://github.com/selenide/selenide.git
-    cd selenide
-    ./gradlew jar
-
-After build you'll find Selenide's .jar file under `build/libs/` directory.
-
-To build Selenide on Windows use `gradlew.bat jar` command.
+Contributions to Selenide are both welcomed and appreciated. 
+See [CONTRIBUTING.md](CONTRIBUTING.md) for specific guidelines.
 
 Feel free to fork, clone, build, run tests and contribute pull requests for Selenide!
 
-## Run test locally inside docker containers
-
-- Syncing browser images from existing configuration file
-  - Install [jq](https://stedolan.github.io/jq)
-  - Extract image names from JSON and automatically pull them:
-     > cat /config/selenoid/browsers.json | jq -r '..|.image?|strings' | xargs -I{} docker pull {}
-- Start selenoid container
-  - Install [docker](https://www.docker.com/products/docker-desktop)
-  - Based on your operation system execute script. Check official [document](https://aerokube.com/selenoid/latest/#_option_2_start_selenoid_container) for correct script.
-- Start tests passing `selenide.remote` configuration variable with `http://localhost:4444/wd/hub` value
 
 ## Authors
 
-Selenide was originally designed and developed by [Andrei Solntsev](http://asolntsev.github.io/) in 2011-2015.
+Selenide was originally designed and developed by [Andrei Solntsev](http://asolntsev.github.io/) in 2011-2020
+ and is maintained by [a group of enthusiast](https://github.com/selenide/selenide/people).
 
 ## Thanks
 

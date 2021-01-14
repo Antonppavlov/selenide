@@ -10,6 +10,7 @@ import java.util.List;
 import static com.codeborne.selenide.AssertionMode.SOFT;
 import static com.codeborne.selenide.logevents.LogEvent.EventStatus.FAIL;
 import static java.lang.System.lineSeparator;
+import static java.util.Collections.unmodifiableList;
 
 @ParametersAreNonnullByDefault
 public class ErrorsCollector implements LogEventListener {
@@ -29,11 +30,24 @@ public class ErrorsCollector implements LogEventListener {
     // ignore
   }
 
-  public void clear() {
+  void clear() {
     errors.clear();
   }
 
+  List<Throwable> getErrors() {
+    return unmodifiableList(errors);
+  }
+
+  /**
+   * 1. Clears all collected errors, and
+   * 2. throws SoftAssertionError if there were some errors
+   *
+   * @param testName any string, usually name of current test
+   */
   public void failIfErrors(String testName) {
+    List<Throwable> errors = new ArrayList<>(this.errors);
+    this.errors.clear();
+
     if (errors.size() == 1) {
       throw new SoftAssertionError(errors.get(0).toString());
     }

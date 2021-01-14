@@ -1,7 +1,5 @@
 package com.codeborne.selenide.files;
 
-import com.codeborne.selenide.proxy.DownloadedFile;
-
 import java.util.regex.Pattern;
 
 class FilenameRegexFilter implements FileFilter {
@@ -16,6 +14,10 @@ class FilenameRegexFilter implements FileFilter {
   }
 
   @Override public String description() {
-    return " with file name matching \"" + fileNameRegex + "\"";
+    return "with file name matching \"" + fileNameRegex + "\"";
+  }
+
+  @Override public String toString() {
+    return description();
   }
 }

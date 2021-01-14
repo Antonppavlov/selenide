@@ -11,18 +11,19 @@ import java.util.Locale;
 
 import static com.automation.remarks.video.enums.RecordingMode.ANNOTATED;
 import static com.codeborne.selenide.Browsers.CHROME;
+import static com.codeborne.selenide.Browsers.FIREFOX;
 import static com.codeborne.selenide.Browsers.SAFARI;
 import static com.codeborne.selenide.impl.FileHelper.ensureFolderExists;
 import static java.lang.Boolean.parseBoolean;
 import static org.openqa.selenium.net.PortProber.findFreePort;
 
 @ExtendWith({LogTestNameExtension.class})
-abstract class BaseIntegrationTest {
+public abstract class BaseIntegrationTest {
   protected static LocalHttpServer server;
   private static String protocol;
   private static int port;
   protected static final String browser = System.getProperty("selenide.browser", CHROME);
-  private static final boolean SSL = !SAFARI.equalsIgnoreCase(browser);
+  private static final boolean SSL = !SAFARI.equalsIgnoreCase(browser) && !FIREFOX.equalsIgnoreCase(browser);
   static final boolean headless = parseBoolean(System.getProperty("selenide.headless", "false"));
 
   @BeforeAll

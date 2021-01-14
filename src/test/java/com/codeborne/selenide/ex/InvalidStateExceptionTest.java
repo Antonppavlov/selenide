@@ -7,7 +7,7 @@ import org.junit.jupiter.api.Test;
 import org.openqa.selenium.StaleElementReferenceException;
 
 final class InvalidStateExceptionTest implements WithAssertions {
-  private Driver driver = new DriverStub();
+  private final Driver driver = new DriverStub();
 
   @Test
   void constructorWithCause() {
@@ -18,7 +18,6 @@ final class InvalidStateExceptionTest implements WithAssertions {
     assertThat(invalidStateException).hasMessageEndingWith("StaleElementReferenceException: Houston, we have a problem");
     assertThat(invalidStateException).hasToString(String.format("Invalid element state: " +
       "Houston, we have a problem%n" +
-      "Screenshot: null%n" +
       "Timeout: 0 ms.%n" +
       "Caused by: StaleElementReferenceException: Houston, we have a problem"));
   }
@@ -29,7 +28,6 @@ final class InvalidStateExceptionTest implements WithAssertions {
 
     assertThat(invalidStateException).hasMessageStartingWith("Invalid element state: Houston, we have a problem");
     assertThat(invalidStateException).hasToString(String.format("Invalid element state: Houston, we have a problem%n" +
-      "Screenshot: null%n" +
       "Timeout: 0 ms."));
   }
 }

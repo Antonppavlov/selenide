@@ -1,7 +1,5 @@
 package com.codeborne.selenide.files;
 
-import com.codeborne.selenide.proxy.DownloadedFile;
-
 class FilenameFilter implements FileFilter {
   private final String fileName;
 
@@ -14,6 +12,10 @@ class FilenameFilter implements FileFilter {
   }
 
   @Override public String description() {
-    return " with file name \"" + fileName + "\"";
+    return "with file name \"" + fileName + "\"";
+  }
+
+  @Override public String toString() {
+    return description();
   }
 }

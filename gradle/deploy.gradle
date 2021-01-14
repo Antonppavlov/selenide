@@ -1,35 +1,45 @@
-jar {
-  manifest {
-    attributes(
-      "Automatic-Module-Name": project.group + '.' + project.name,
-      "Implementation-Title": project.group + '.' + project.name,
-      "Implementation-Version": version,
-      "Implementation-Vendor": "Codeborne")
+allprojects {
+  tasks.withType(Jar) {
+    manifest {
+      attributes(
+        "Automatic-Module-Name": project.group + '.' + project.name,
+        "Implementation-Title": project.group + '.' + project.name,
+        "Implementation-Version": archiveVersion,
+        "Implementation-Vendor": "selenide.org")
+    }
   }
-  from sourceSets.main.output
-  from sourceSets.staticFacade.output
+  tasks.withType(Javadoc) {
+    failOnError = false
+  }
 }
 
-task sourcesJar(type: Jar, dependsOn: classes) {
-  classifier = 'sources'
-  from sourceSets.main.allSource
-  from sourceSets.staticFacade.allSource
+task allprojectsJar(type: Jar, dependsOn: classes) {
+  from allprojects.sourceSets.main.output
+  destinationDir file("${project.buildDir}/libs-to-upload")
 }
 
-javadoc {
-  failOnError = false
-  source = sourceSets.main.allJava + sourceSets.staticFacade.allJava
+task allprojectsSourcesJar(type: Jar) {
+  archiveClassifier = 'sources'
+  from allprojects.sourceSets.main.allSource
+  destinationDir file("${project.buildDir}/libs-to-upload")
 }
 
-task javadocJar(type: Jar, dependsOn: javadoc) {
-  classifier = 'javadoc'
-  from javadoc.destinationDir
+task allprojectsJavadoc(type: Javadoc) {
+  source = allprojects.sourceSets.main.allJava
 }
+
+task allprojectsJavadocJar(type: Jar, dependsOn: allprojectsJavadoc) {
+  archiveClassifier = 'javadoc'
+  from allprojectsJavadoc.destinationDir
+  destinationDir file("${project.buildDir}/libs-to-upload")
+}
+
+uploadArchives.dependsOn(allprojectsJar, allprojectsSourcesJar, allprojectsJavadoc)
 
 artifacts {
-  archives jar
-  archives sourcesJar
-  archives javadocJar
+  archives allprojectsJar
+  archives allprojectsSourcesJar
+  archives allprojectsJavadocJar
 }
 
 
@@ -37,7 +47,9 @@ if (project.hasProperty("signing.keyId")) {
   apply plugin: 'signing'
 
   signing {
-    sign configurations.archives
+    sign allprojectsJar
+    sign allprojectsSourcesJar
+    sign allprojectsJavadocJar
   }
 
   uploadArchives {
@@ -87,6 +99,10 @@ if (project.hasProperty("signing.keyId")) {
             developer {
               id 'vinogradoff'
               name 'Alexei Vinogradov'
+            }
+            developer {
+              id 'dstekanov'
+              name 'Dmytro Stekanov'
             }
           }
         }

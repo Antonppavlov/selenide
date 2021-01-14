@@ -1,7 +1,73 @@
 # Changelog
 
-## 5.16.0 (planned to 1x.10.2020)
-* #1051 Selenide plugins system
+## 5.17.3 (released 10.01.2021)
+* #1361 Fix int method arguments displaying in selenide report(log)  --  thanks to Pavel Fokin @fokinp
+* #1363 Add human-readable description of FileFilter arguments in selenide report  --  thanks to Pavel Fokin @fokinp
+* #1364 Fix download log event missing in case of FileNotFoundException  --  thanks to Pavel Fokin @fokinp
+* #1360 extract interface PageObjectFactory from SelenidePageFactory
+* #1360 move usages of o.o.s.s.pagefactory.Annotations to SelenidePageFactory.findSelector()  -  make it customizable
+
+## 5.17.2 (released 30.12.2020)
+* #1355 make Commands return SelenideElement instead of WebElement  --  thanks to Boris Osipov
+* #1356 fix method $.setValue(null)  --  thanks to Dmitriy Zemlyanitsyn for PR #1357
+* #1070 #981 enable using soft asserts in @BeforeAll and @AfterAll methods (in JUnit 5)  --  see PR #1359
+
+## 5.17.1: broken, please ignore it.
+
+## 5.17.0 (released 26.12.2020)
+* #1200 Add method $.as("name") to give elements human-readable names  --  see PR #1353
+* #1329 Apply chrome headless arguments from puppeteer config  --  thanks to Aliaksandr Rasolka
+* #1346 Return all shadow dom elements  --  thanks to Daniel H. Peger for PR #1347
+
+* #1136 add method $.shouldBe(condition, timeout) as a replacement for $.waitUntil(condition, timeout)  --  see PR #1340
+* #1136 deprecate Conditions that were created for using with $.waitUntil/$.waitWhile methods  --  see PR #1340
+* #1338 improve message of waitUntil/waitWhile methods  --  see PR #1340
+
+* #694 support page object fields of generic types  --  see PR #1351
+* #282, #482 enable lazy loading for Page Object fields of type List<ElementsContainer>  --  see PR #1354
+
+* #1348 split the single gradle project to subprojects
+* #1344 Fixed OS dependencies in Selenide tests  --  thanks to Daniel H. Peger for PR #1345
+* #1343 Simple code cleanup  --  thanks to Yuri Orlov
+* Upgraded to browserup-proxy:2.1.2 and guava:30.1-jre
+* Support for chrome 88, edge 89, opera 73
+
+## 5.16.2 (released 25.11.2020)
+* #1332 return old click(int, int) command logic  --  thanks to Petro Ovcharenko for PR #1333
+* make SoftAssertsExtension thread-safe  --  thanks to @dtuchs for PR #1334
+* #1258 fix soft asserts with ParameterizedTest in jUnit5  --  see PR #1328
+* #1293 don't report "Element not found" in case of other errors  --  see PR #1326
+* #1290 don't show unused page object fields in report  --  see PR #1327
+* upgrade to littleproxy:2.0.1  --  see PR #1325
+
+## 5.16.1 (released 23.11.2020)
+* #1314 do not exclude "load-extension" switch if Chrome is opened with extensions  --  see PR #1324
+* #1315 support custom DriverFactory for running remote browsers  --  see PR #1324
+
+## 5.16.0 (released 20.11.2020)
+
+#### Selenide plugins:
+* #1051 implement Selenide plugins system  --  see PR #1264
+* #1051 add extension point for describing WebElement/AppiumElement
+* #1051 add extension point for customizing taking screenshots  --  see PR #1317
+* #1051 add extension point for customizing saving page source  --  see PR #1321
+* #1051 add extension point for downloading files from remote browsers
+
+#### Error messages:
+* Improve NOT condition description  --  thanks to Pavel Fokin for PR #1306
+* Improve AND condition description  --  thanks to Pavel Fokin for PR #1300
+* Add parent element to ElementFinder.getSearchCriteria  --  thanks to Petro Ovcharenko for PR #1312
+* #1261 Add actual own text to error message (when one of checks `ownText`, `exactOwnText` fails)  --  see PR #1294
+* #987 Avoid throwing "Element not found" when actually a file is not found  --  see PR #1301
+* #1302 show ClickOptions details in report  --  see PR #1303
+
+#### Other:
+* Add collection condition $$.shouldHave(exactTextsCaseSensitiveInAnyOrder(...))  --  thanks to Vitali Plagov for PR #1286
+* #1298 fix href condition for encoded values  --  thanks to @rerednaw for PR #1299
+* #1307 Allow Chrome to download multiple files in one request (set as default setting)  --  thanks to Alexei Vinogradov for PR #1308
+* #1322 allow downloading a file with slash in name  --  see PR #1323
+* fix version of Guava 30.0-jre (to avoid all those endless problems when Maven or Gradle transitively resolves too old Guava version)
+* Build Selenide with github actions (instead of Travis CI)  --  thanks to Boris Osipov for PR #1319
 
 ## 5.15.1 (released 03.10.2020)
 * Fix creating logs dir in parallel tests
